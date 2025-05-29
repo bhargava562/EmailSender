@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Sender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            font-size: 1.3em;
+            margin-top: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="email"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 150px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button.remove {
+            background-color: #f44336;
+        }
+        button.remove:hover {
+            background-color: #d32f2f;
+        }
+        .recipients-container {
+            margin-bottom: 15px;
+        }
+        .recipient-row {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        .recipient-row input {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        .alert-danger {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+        .saved-recipients {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .saved-recipient {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .saved-recipient:last-child {
+            border-bottom: none;
+        }
+        .saved-recipient button {
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
+        .use-button {
+            background-color: #2196F3;
+        }
+        .use-button:hover {
+            background-color: #0b7dda;
+        }
+        .info-text {
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .checkbox-group input {
+            margin-right: 10px;
+        }
+        .recipient-count {
+            color: #2196F3;
+            font-weight: bold;
+        }
+        .select-all-container {
+            padding: 10px;
+            background-color: #f1f1f1;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .select-all-container label {
+            display: inline;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Email Sender</h1>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <form id="email-form" action="/send-email" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Additional Recipients (optional):</label>
+            <div id="recipients-container" class="recipients-container">
+                <div class="recipient-row">
+                    <input type="email" name="toEmails" placeholder="recipient@example.com">
+                    <button type="button" class="remove" onclick="removeRecipient(this)" style="display: none;">Remove</button>
+                </div>
+            </div>
+            <button type="button" onclick="addRecipient()">Add Recipient</button>
+            <p class="info-text">If no recipients are specified, email will be sent to all saved recipients</p>
+        </div>
+
+        <div class="form-group">
+            <label for="subject">Subject:</label>
+            <input type="text" id="subject" name="subject" required>
+        </div>
+
+        <div class="form-group">
+            <label for="body">Body:</label>
+            <textarea id="body" name="body" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="attachment">Attachment (optional):</label>
+            <input type="file" id="attachment" name="attachment">
+        </div>
+
+        <button type="submit">Send Email</button>
+    </form>
+
+    <h2>Saved Recipients <span class="recipient-count" th:text="${'(' + (savedRecipients != null ? savedRecipients.size() : 0) + ')'}"></span></h2>
+    <div class="saved-recipients">
+        <div th:if="${savedRecipients == null || savedRecipients.isEmpty()}" style="text-align: center; padding: 10px;">
+            No saved recipients yet
+        </div>
+        <div th:unless="${savedRecipients == null || savedRecipients.isEmpty()}" class="select-all-container">
+            <input type="checkbox" id="select-all" onclick="selectAllRecipients()">
+            <label for="select-all">Select All Recipients</label>
+        </div>
+        <div th:each="recipient : ${savedRecipients}" class="saved-recipient">
+            <div class="checkbox-group">
+                <input type="checkbox" th:id="${'recipient-' + recipientStat.index}" name="selectedRecipients" th:value="${recipient}" form="email-form" class="recipient-checkbox">
+                <label th:for="${'recipient-' + recipientStat.index}" th:text="${recipient}"></label>
+            </div>
+            <div>
+                <button type="button" class="use-button" onclick="useRecipient(this.getAttribute('data-email'))" th:data-email="${recipient}">Use</button>
+                <form action="/remove-recipient" method="post" style="display: inline;">
+                    <input type="hidden" name="email" th:value="${recipient}">
+                    <button type="submit" class="remove">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addRecipient() {
+        const container = document.getElementById('recipients-container');
+        const recipientRow = document.createElement('div');
+        recipientRow.className = 'recipient-row';
+
+        const input = document.createElement('input');
+        input.type = 'email';
+        input.name = 'toEmails';
+        input.placeholder = 'recipient@example.com';
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'remove';
+        removeButton.textContent = 'Remove';
+        removeButton.onclick = function() { removeRecipient(this); };
+
+        recipientRow.appendChild(input);
+        recipientRow.appendChild(removeButton);
+        container.appendChild(recipientRow);
+
+        // Show all remove buttons when there are multiple recipients
+        const removeButtons = container.querySelectorAll('.remove');
+        removeButtons.forEach(button => {
+            button.style.display = 'inline-block';
+        });
+    }
+
+    function removeRecipient(button) {
+        const container = document.getElementById('recipients-container');
+        const rows = container.querySelectorAll('.recipient-row');
+
+        if (rows.length > 1) {
+            const row = button.parentNode;
+            container.removeChild(row);
+
+            // Hide the remove button if only one recipient is left
+            if (rows.length === 2) {
+                const lastRemoveButton = container.querySelector('.remove');
+                if (lastRemoveButton) {
+                    lastRemoveButton.style.display = 'none';
+                }
+            }
+        }
+    }
+
+    function useRecipient(email) {
+        const container = document.getElementById('recipients-container');
+        const firstInput = container.querySelector('input[name="toEmails"]');
+
+        // If the first input is empty, use it
+        if (!firstInput.value) {
+            firstInput.value = email;
+            return;
+        }
+
+        // Otherwise add a new recipient
+        const recipientRow = document.createElement('div');
+        recipientRow.className = 'recipient-row';
+
+        const input = document.createElement('input');
+        input.type = 'email';
+        input.name = 'toEmails';
+        input.value = email;
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'remove';
+        removeButton.textContent = 'Remove';
+        removeButton.onclick = function() { removeRecipient(this); };
+        removeButton.style.display = 'inline-block';
+
+        recipientRow.appendChild(input);
+        recipientRow.appendChild(removeButton);
+        container.appendChild(recipientRow);
+
+        // Show all remove buttons
+        const removeButtons = container.querySelectorAll('.remove');
+        removeButtons.forEach(button => {
+            button.style.display = 'inline-block';
+        });
+    }
+
+    function selectAllRecipients() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.recipient-checkbox');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    }
+</script>
+</body>
+</html>
