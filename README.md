@@ -124,15 +124,15 @@ This project is not publicly deployed and is intended to be run on a local machi
 ## 📂 Project Structure
 
 Here are the key files and directories in the project:
-/src
-├──/main
-│  ├──/java/...         # Main application Java source code (Controllers, Services)
-│  └──/resources
-│     ├──/templates     # HTML files for the UI (e.g., index.html)
-│     ├── emails.txt    # Your list of recipient emails
-│     └── application.properties # Application and email configuration
-└──/test
-pom.xml                 # Maven project configuration
+/src<br>
+├──/main<br>
+│  ├──/java/...         # Main application Java source code (Controllers, Services)<br/>
+│  └──/resources<br/>
+│     ├──/templates     # HTML files for the UI (e.g., index.html)<br/>
+│     ├── emails.txt    # Your list of recipient emails<br/>
+│     └── application.properties # Application and email configuration<br/>
+└──/test<br/>
+pom.xml                 # Maven project configuration<br/>
 
 ## 📜 License
 
