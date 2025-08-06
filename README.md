@@ -124,3 +124,22 @@ This project is not publicly deployed and is intended to be run on a local machi
 ## 📂 Project Structure
 
 Here are the key files and directories in the project:
+/src
+├──/main
+│  ├──/java/...         # Main application Java source code (Controllers, Services)
+│  └──/resources
+│     ├──/templates     # HTML files for the UI (e.g., index.html)
+│     ├── emails.txt    # Your list of recipient emails
+│     └── application.properties # Application and email configuration
+└──/test
+pom.xml                 # Maven project configuration
+
+## 📜 License
+
+This project is licensed under the MIT License. See the `LICENSE` file for more details.
+
+---
+
+<p align="center">
+  Developed with ❤️ and Java by Bhargava A
+</p>
